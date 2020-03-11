@@ -16,6 +16,7 @@ absolute<-T
 Corto<-NA
 phenoFile<-NA
 phenoDataColumn<-NA
+cormethod<-"spearman"
 for(arg in args)
 {
   argCase<-strsplit(x = arg,split = "=")[[1]][1]
@@ -53,6 +54,10 @@ for(arg in args)
   {
     phenoDataColumn=as.character(value)
   }
+  if(argCase=="CorMethod")
+  {
+    cormethod=as.character(value)
+  }
   if(argCase=="output")
   {
     output=as.character(value)
@@ -76,11 +81,11 @@ massTracesXCMSSet@phenoData[i]<-fileNameMap[fileNameMap[,1]==rownames(massTraces
 SpecificCorrelation<-function(x,d=c(1:length(x)))
 {
   if(length(na.omit(x))<=1)return(data.frame(pvalue=1,cor=as.numeric(-1.1)))
-  if(sd(x)==0)return(data.frame(pvalue=1.1,cor=as.numeric(-1.1)))
+  if(sd(x,na.rm = T)==0)return(data.frame(pvalue=1.1,cor=as.numeric(-1.1)))
   y<-d
   tmpToCor<-cbind(x,y)
   tmpToCor<-na.omit(tmpToCor)
-  tmp<-cor.test(tmpToCor[,1],tmpToCor[,2])
+  tmp<-cor.test(tmpToCor[,1],tmpToCor[,2],method = cormethod)
   return(data.frame(pvalue=tmp$p.value,cor=as.numeric(tmp$estimate)))
 }
 xset<-inputXCMS
@@ -101,10 +106,10 @@ for( i in seq_along(idx)){
   names(peaks)<-c(as.character(xset@phenoData[,1]))
   co<-SpecificCorrelation(peaks[dilutionTrend],Corto)
   if(absolute)
-    co$cor<-abs(co$cor) 
+    co$cor<-abs(co$cor)
   if(!co$cor<corCutoff & co$pvalue<pvalueCutoff)
   {
-    
+
     removeGR<-c(removeGR,i)
     removePk<-c(removePk,idx[[i]])
   }
@@ -122,6 +127,3 @@ preprocessingSteps<-c(preprocessingSteps,"dilutionFilter")
 varNameForNextStep<-as.character("xset")
 
 save(list = c("xset","preprocessingSteps","varNameForNextStep"),file = output)
-
-
-
