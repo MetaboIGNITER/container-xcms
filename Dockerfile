@@ -21,10 +21,21 @@ RUN apt-get -y update && apt-get -y --no-install-recommends install make gcc gfo
     apt-get -y --purge --auto-remove remove make gcc gfortran g++ libblas-dev liblapack-dev && \
     apt-get -y clean && apt-get -y autoremove && rm -rf /var/lib/{cache,log}/ /tmp/* /var/tmp/*
 
+    RUN apt-get -y update && apt-get -y --no-install-recommends install make gcc gfortran g++ libnetcdf-dev libxml2-dev libblas-dev liblapack-dev libssl-dev r-base-dev pkg-config git && \
+      R -e 'source("https://bioconductor.org/biocLite.R");biocLite(c("jsonlite"))' && \
+        R -e 'source("https://bioconductor.org/biocLite.R");biocLite(c("irlba","igraph","XML","intervals"))' && \
+          R -e 'devtools::install_version("latticeExtra")' && \
+        R -e 'library(devtools); source("https://bioconductor.org/biocLite.R"); biocLite("xcms")' && \
+        apt-get -y --purge --auto-remove remove make gcc gfortran g++ libblas-dev liblapack-dev r-base-dev libssl-dev pkg-config && \
+        apt-get -y clean && apt-get -y autoremove && rm -rf /var/lib/{cache,log}/ /tmp/* /var/tmp/*
+
+    # Install zip package
+    RUN  apt-get -y update && apt-get -y --no-install-recommends install make gcc gfortran g++ && \
+    R -e 'source("https://bioconductor.org/biocLite.R");biocLite(c("zip"))'
+RUn R -e 'source("https://bioconductor.org/biocLite.R");biocLite(c("IPO"))'
 # Add scripts to container
 ADD scripts/*.r /usr/local/bin/
 RUN chmod +x /usr/local/bin/*.r
 
 # Add testing to container
 ADD runTest1.sh /usr/local/bin/runTest1.sh
-

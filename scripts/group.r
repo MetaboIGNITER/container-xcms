@@ -10,6 +10,11 @@ previousEnv<-NA
 output<-NA
 bw<-15
 mzwid=0.005
+minfrac<-0.3
+minsamp<-1
+max<-50
+ipo_in<-NA
+
 for(arg in args)
 {
   argCase<-strsplit(x = arg,split = "=")[[1]][1]
@@ -18,10 +23,27 @@ for(arg in args)
   {
     previousEnv=as.character(value)
   }
+  if(argCase=="ipo_in")
+  {
+    ipo_in=as.character(value)
+  }
   if(argCase=="bandwidth")
   {
     bw=as.numeric(value)
   }
+  if(argCase=="minfrac")
+  {
+    minfrac=as.numeric(value)
+  }
+  if(argCase=="minsamp")
+  {
+    minsamp=as.numeric(value)
+  }
+  if(argCase=="max")
+  {
+    max=as.numeric(value)
+  }
+  
   if(argCase=="mzwid")
   {
     mzwid=as.numeric(value)
@@ -38,7 +60,33 @@ load(file = previousEnv)
 
 toBeGrouped<-get(varNameForNextStep)
 
-xcmsSetGrouped<-  group(toBeGrouped,bw=bw,mzwid=mzwid)
+if(!is.na(ipo_in))
+{
+  ## Read IPO params
+  ## This will overwrite the parameters that have been supplies by the user
+  library(jsonlite)
+  ipo_json<-read_json(ipo_in,simplifyVector = T)
+  ipo_params<-fromJSON(ipo_json)
+  bw<-ipo_params$bw
+  minfrac<-ipo_params$minfrac
+  mzwid<-ipo_params$mzwid
+  minsamp<-ipo_params$minsamp
+  max<-ipo_params$max
+}
+
+ipo_inv<-get("ipo_inv")
+if(ipo_inv==TRUE & is.na(ipo_in))
+{
+  ipo_params<-get("ipo_params_set")
+  ipo_params<-ipo_params
+  bw<-ipo_params$bw
+  minfrac<-ipo_params$minfrac
+  mzwid<-ipo_params$mzwid
+  minsamp<-ipo_params$minsamp
+  max<-ipo_params$max
+}
+
+xcmsSetGrouped<-  group(toBeGrouped,bw=bw,mzwid=mzwid,max=max,minsamp=minsamp,minfrac=minfrac,method="density")
 
 preprocessingSteps<-c(preprocessingSteps,"Group")
 
